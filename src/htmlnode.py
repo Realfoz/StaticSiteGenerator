@@ -23,21 +23,34 @@ class HTMLNode:
 
 
 class LeafNode(HTMLNode):
-    def __init__(self, value, tag=None, props=None):
-        super().__init__(tag, value, props)
+    def __init__(self, tag, value, props=None):
+            # Ensure props is a dictionary or None
+            if props is not None and not isinstance(props, dict):
+              raise TypeError("props must be a dictionary")
+            # Pass arguments to parent constructor explicitly
+            super().__init__(tag=tag, value=value, children=None, props=props)
+
         
+
     def to_html(self):
         if not self.value:
-            raise ValueError("must have a value") # removes none value inputs 
-        
-        html = f"<{self.tag}" # adds the initial tag if it has one with the <
+            raise ValueError("must have a value") 
 
+        if self.tag is None:
+            return self.value
+    
+        # Start building the opening tag
+        html = f"<{self.tag}" 
+
+        # Add props (attributes) if they exist
         if self.props:
-            for prop, val in self.props.items():    # iterates over each prop to add each tuple to the html string with proper formating
+            for prop, val in self.props.items():   
                 html += f' {prop}="{val}"'
 
-        html += f">{self.value}</{self.tag}>" # finalizes the string with final values and tags
-    
+        # Close the opening tag, add value, and the closing tag
+        html += f">{self.value}</{self.tag}>"
+        
         return html
+
         
         

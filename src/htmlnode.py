@@ -1,4 +1,4 @@
-
+from textnode import TextNode, TextType
 
 
 class HTMLNode:
@@ -61,8 +61,51 @@ class ParentNode(HTMLNode):
 
     def to_html(self):
         if not self.tag:
-            raise ValueError("must have a tag")
+            raise ValueError("Parent node missing tag")
         if not self.children:
-            raise ValueError("must have a child")
-
+            raise ValueError("Parent node missing children")
+    
+        
+        html = f"<{self.tag}"
+    
+        if self.props:
+            for prop, val in self.props.items():   
+                html += f' {prop}="{val}"'
+    
+        html += ">"
+    
+        children_html = ""   
         for child in self.children:
+            children_html += child.to_html()
+    
+        html += children_html
+        html += f"</{self.tag}>"
+    
+        return html
+    
+
+def text_node_to_html_node(text_node):
+    if text_node.text_type == TextType.TEXT:
+        return LeafNode(None, text_node.text)
+        
+    elif text_node.text_type == TextType.BOLD:
+        return LeafNode("b", text_node.text)
+    
+    elif text_node.text_type == TextType.ITALIC:
+        return LeafNode("i", text_node.text)
+    
+    elif text_node.text_type == TextType.CODE:
+        return LeafNode("code", text_node.text)
+
+    elif text_node.text_type == TextType.LINK:
+        return LeafNode("a", text_node.text, {"href": text_node.url})
+    
+    elif text_node.text_type == TextType.IMAGE:
+        return LeafNode("img", "", {
+        "src": text_node.url,  
+        "alt": text_node.text
+         })
+
+    else:
+        # Raise an exception for unknown TextType
+        raise Exception(f"Invalid TextType: {text_node.text_type}")

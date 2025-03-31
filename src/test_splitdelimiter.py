@@ -1,6 +1,6 @@
 import unittest
 from node_types import TextNode, TextType
-from split_delimiter import split_nodes_delimiter  
+from split_delimiter import split_nodes_delimiter, markdown_to_blocks  
 
 class TestSplitNodesDelimiter(unittest.TestCase):
     def test_split_with_code_delimiter(self):
@@ -26,3 +26,23 @@ class TestSplitNodesDelimiter(unittest.TestCase):
     def test_non_text_node_unchanged(self):
         node = TextNode("This is already code", TextType.CODE)
         new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+
+    def test_markdown_to_blocks(self):
+        md = """
+        This is **bolded** paragraph
+
+        This is another paragraph with _italic_ text and `code` here
+        This is the same paragraph on a new line
+
+        - This is a list
+        - with items
+        """
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+            "This is **bolded** paragraph",
+            "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+            "- This is a list\n- with items",
+            ],
+        )

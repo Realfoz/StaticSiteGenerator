@@ -1,4 +1,4 @@
-from node_types import TextNode, TextType
+from node_types import TextNode, TextType, BlockType
 import re 
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
@@ -105,3 +105,53 @@ def split_nodes_link(old_nodes):
 
 
 
+def markdown_to_blocks(markdown):
+    final_list = []
+    # Strip leading/trailing whitespace or newlines from the entire input
+    split_lines = markdown.strip().split("\n\n")
+    for line in split_lines:
+        if line.strip():  # Only process non-empty blocks
+            # Clean up each block while preserving internal structure
+            stripped_block = "\n".join(subline.strip() for subline in line.split("\n"))
+            final_list.append(stripped_block)
+    return final_list
+
+
+
+
+def block_to_block_type(block):
+    # Check for heading
+    if block.startswith("#"):
+        parts = block.split(" ", 1)
+        if len(parts) > 1 and 1 <= len(parts[0]) <= 6 and all(char == '#' for char in parts[0]):
+            return BlockType.heading
+    
+    # Check for code block
+    if block.startswith("```") and block.endswith("```"):
+        return BlockType.code
+    
+    # Split into lines for multi-line checks
+    lines = block.split("\n")
+    
+    # Check for quote block
+    if all(line.startswith(">") for line in lines):
+        return BlockType.quote
+    
+    # Check for unordered list
+    if all(line.startswith("- ") for line in lines):
+        return BlockType.unordered_list
+    
+    # Check for ordered list using function below
+    if lines and is_ordered_list(block):
+        return BlockType.ordered_list
+    
+    return BlockType.paragraph
+        
+
+def is_ordered_list(block):
+    lines = block.split("\n")
+    for i, line in enumerate(lines):
+        expected_start = f"{i+1}. "
+        if not line.startswith(expected_start):
+            return False
+    return True        

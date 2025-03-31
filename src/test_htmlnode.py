@@ -26,5 +26,8 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(node.children, [])
         self.assertEqual(node.props, {"class": "text"})
 
+
+    
+
 if __name__ == "__main__":
     unittest.main()

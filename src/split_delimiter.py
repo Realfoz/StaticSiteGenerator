@@ -1,4 +1,5 @@
-from textnode import TextNode, TextType
+from node_types import TextNode, TextType
+import re 
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []  # Initialize an empty list to store the resulting nodes
@@ -27,3 +28,80 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         else:
             new_nodes.append(node) # Add the non-text node directly to the list
     return new_nodes  # Ensure the fully constructed list is returned
+
+
+def extract_markdown_images(text):
+    return re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
+
+
+def extract_markdown_links(text):
+    return re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
+
+
+def split_nodes_image(old_nodes):
+    result = []
+    for node in old_nodes:  # Iterate over each node in the list
+        if node.text_type != TextType.IMAGE: 
+            image_tuples = extract_markdown_images(node.text)
+            if not image_tuples:  # if no images found, add the node as is
+                result.append(node)
+            else:
+                current_text = node.text  # Initialize current_text
+                for alt_text, url in image_tuples:
+                    # Split the current text at the image markdown
+                    image_markdown = f"![{alt_text}]({url})"
+                    parts = current_text.split(image_markdown, 1)
+                    
+                    # Add a text node for the part before the image (if not empty)
+                    if parts[0]:
+                        result.append(TextNode(parts[0], TextType.TEXT))
+                    
+                    # Add the image node
+                    result.append(TextNode(alt_text, TextType.IMAGE, url))
+                    
+                    # The remaining text becomes the current text for the next iteration
+                    current_text = parts[1] if len(parts) > 1 else ""
+                
+                # Add any remaining text after all images are processed
+                if current_text:
+                    result.append(TextNode(current_text, TextType.TEXT))
+        else:
+            result.append(node)
+    return result  # Return result after processing all nodes
+
+
+
+
+def split_nodes_link(old_nodes):
+    result = []
+    for node in old_nodes:  # Iterate over each node in the list
+        if node.text_type != TextType.LINK: 
+            links = extract_markdown_links(node.text)
+            if not links:  # if no link found, add the node as is
+                result.append(node)
+            else:
+                current_text = node.text  # Initialize current_text
+                for text, url in links:
+                    # Split the current text at the link markdown
+                    link_markdown = f"[{text}]({url})"
+                    parts = current_text.split(link_markdown, 1)
+                    
+                    # Add a text node for the part before the link (if not empty)
+                    if parts[0]:
+                        result.append(TextNode(parts[0], TextType.TEXT))
+                    
+                    # Add the link node
+                    result.append(TextNode(text, TextType.LINK, url))
+                    
+                    # The remaining text becomes the current text for the next iteration
+                    current_text = parts[1] if len(parts) > 1 else ""
+                
+                # Add any remaining text after all link are processed
+                if current_text:
+                    result.append(TextNode(current_text, TextType.TEXT))
+        else:
+            result.append(node)
+    return result  # Return result after processing all nodes
+
+
+

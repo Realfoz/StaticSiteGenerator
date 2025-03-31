@@ -1,6 +1,7 @@
 import unittest
 
-from textnode import TextNode, TextType
+from node_types import TextNode, TextType
+from textnode import text_to_textnodes
 from htmlnode import text_node_to_html_node
 
 
@@ -96,5 +97,6 @@ class TestTextNode(unittest.TestCase):
         # You might need to adjust based on your actual implementation
         node = TextNode("Invalid", "INVALID")
 
+    
 if __name__ == "__main__":
     unittest.main()

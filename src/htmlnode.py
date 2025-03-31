@@ -1,4 +1,5 @@
-from textnode import TextNode, TextType
+from node_types import TextNode, TextType
+
 
 
 class HTMLNode:
@@ -109,3 +110,10 @@ def text_node_to_html_node(text_node):
     else:
         # Raise an exception for unknown TextType
         raise Exception(f"Invalid TextType: {text_node.text_type}")
+    
+
+
+
+
+
+    

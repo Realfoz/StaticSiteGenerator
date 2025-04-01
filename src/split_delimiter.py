@@ -1,5 +1,7 @@
 from node_types import TextNode, TextType, BlockType
+from htmlnode import HTMLNode,ParentNode,LeafNode, text_node_to_html_node
 import re 
+
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []  # Initialize an empty list to store the resulting nodes
@@ -127,7 +129,9 @@ def block_to_block_type(block):
             return BlockType.heading
     
     # Check for code block
-    if block.startswith("```") and block.endswith("```"):
+    
+    stripped_lines = [line.strip() for line in block.split('\n')]
+    if len(stripped_lines) >= 2 and stripped_lines[0] == "```" and stripped_lines[-1] == "```":
         return BlockType.code
     
     # Split into lines for multi-line checks
@@ -155,3 +159,104 @@ def is_ordered_list(block):
         if not line.startswith(expected_start):
             return False
     return True        
+
+
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)  # Split the markdown into blocks
+    parent_node = ParentNode("div", [], None)   # Create a parent "div" node for all content
+    
+    for block in blocks:
+        block_type = block_to_block_type(block)  # Determine type of block
+        text = ""  # Initialize the text variable
+        
+        if block_type == BlockType.paragraph:
+            # Replace newlines with spaces in paragraph text
+            text = " ".join([line.strip() for line in block.split("\n") if line.strip()])
+            html_node = ParentNode("p", text_to_children(text))
+            parent_node.children.append(html_node)
+        
+        elif block_type == BlockType.heading:
+            level = block.count("#", 0, block.index(" "))  # Number of "#" defines the level
+            text = block[level + 1:].strip()  # Extract the text without the heading markers
+            html_node = ParentNode(f"h{level}", text_to_children(text))
+            parent_node.children.append(html_node)
+        
+        elif block_type == BlockType.code:
+            # Create code block node
+            code_content = clean_code_block(block)
+            code_node = ParentNode("code",[TextNode(code_content, TextType.TEXT)])
+            pre_node = ParentNode("pre", [code_node])
+            parent_node.children.append(pre_node)
+        
+        elif block_type == BlockType.quote:
+            text = block[1:].strip()  # Remove the ">" marker and surrounding whitespace
+            html_node = ParentNode("blockquote", text_to_children(text))
+            parent_node.children.append(html_node)
+        
+        elif block_type == BlockType.ordered_list:
+            lines = block.splitlines()  # Split ordered list into individual items
+            list_items = []
+            for line in lines:
+                item_text = line.lstrip("0123456789. ").strip()  # Remove "1. " or similar
+                list_items.append(ParentNode("li", text_to_children(item_text)))
+            html_node = ParentNode("ol", list_items)
+            parent_node.children.append(html_node)
+        
+        elif block_type == BlockType.unordered_list:
+            lines = block.splitlines()  # Split unordered list into individual items
+            list_items = []
+            for line in lines:
+                item_text = line.lstrip("- ").strip()  # Remove "- " or similar
+                list_items.append(ParentNode("li", text_to_children(item_text)))
+            html_node = ParentNode("ul", list_items)
+            parent_node.children.append(html_node)
+    return parent_node
+
+
+def text_to_textnodes(text):
+    
+    nodes = [TextNode(text, TextType.TEXT)]
+    
+    # Handle special markdown elements first
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+    
+    # Then handle the delimiter-based formatting
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    
+    return nodes
+
+def clean_code_block(block):
+    # Strip leading/trailing whitespace from each line
+    lines = [line.rstrip() for line in block.split('\n')]
+    
+    # Find the first and last line with backticks
+    start_idx = -1
+    end_idx = -1
+    
+    for i, line in enumerate(lines):
+        if line.strip() == "```":
+            if start_idx == -1:
+                start_idx = i
+            else:
+                end_idx = i
+                break
+    
+    # If we found both start and end markers
+    if start_idx != -1 and end_idx != -1:
+        # Extract lines between the backticks (excluding the backticks themselves)
+        code_lines = lines[start_idx + 1:end_idx]
+        return "\n".join(code_lines)
+    
+    # Fallback - this shouldn't happen if block_to_block_type correctly identifies code blocks
+    return block
+
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+    html_nodes = []
+    for text_node in text_nodes:
+        html_node = text_node_to_html_node(text_node)
+        html_nodes.append(html_node)
+    return html_nodes

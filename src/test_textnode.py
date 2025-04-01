@@ -1,7 +1,7 @@
 import unittest
 
 from node_types import TextNode, TextType
-from textnode import text_to_textnodes
+from split_delimiter import text_to_textnodes
 from htmlnode import text_node_to_html_node
 
 

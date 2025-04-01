@@ -2,6 +2,7 @@ from node_types import TextNode, TextType
 
 
 
+
 class HTMLNode:
     def __init__(self, tag=None, value=None, children=None, props=None):
         self.tag = tag
@@ -63,8 +64,7 @@ class ParentNode(HTMLNode):
     def to_html(self):
         if not self.tag:
             raise ValueError("Parent node missing tag")
-        if not self.children:
-            raise ValueError("Parent node missing children")
+        
     
         
         html = f"<{self.tag}"

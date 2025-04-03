@@ -10,7 +10,7 @@ class HTMLNode:
         self.children = children
         self.props = props
 
-    def to_html(self):
+    def to_html(self):      
         raise NotImplementedError
     
 
@@ -25,6 +25,7 @@ class HTMLNode:
 
 
 class LeafNode(HTMLNode):
+    
     def __init__(self, tag, value, props=None):
             # Ensure props is a dictionary or None
             if props is not None and not isinstance(props, dict):
@@ -34,7 +35,7 @@ class LeafNode(HTMLNode):
 
         
 
-    def to_html(self):
+    def to_html(self):    
         if not self.value:
             raise ValueError("must have a value") 
 
@@ -64,9 +65,7 @@ class ParentNode(HTMLNode):
     def to_html(self):
         if not self.tag:
             raise ValueError("Parent node missing tag")
-        
-    
-        
+               
         html = f"<{self.tag}"
     
         if self.props:
@@ -102,7 +101,7 @@ def text_node_to_html_node(text_node):
         return LeafNode("a", text_node.text, {"href": text_node.url})
     
     elif text_node.text_type == TextType.IMAGE:
-        return LeafNode("img", "", {
+        return LeafNode("img", " ", {
         "src": text_node.url,  
         "alt": text_node.text
          })

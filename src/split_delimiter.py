@@ -184,7 +184,7 @@ def markdown_to_html_node(markdown):
         elif block_type == BlockType.code:
             # Create code block node
             code_content = clean_code_block(block)
-            code_node = ParentNode("code",[TextNode(code_content, TextType.TEXT)])
+            code_node = ParentNode("code", [text_node_to_html_node(TextNode(code_content, TextType.TEXT))])
             pre_node = ParentNode("pre", [code_node])
             parent_node.children.append(pre_node)
         
@@ -255,8 +255,10 @@ def clean_code_block(block):
 
 def text_to_children(text):
     text_nodes = text_to_textnodes(text)
+        
+    # Convert TextNodes to HTMLNodes
     html_nodes = []
-    for text_node in text_nodes:
-        html_node = text_node_to_html_node(text_node)
-        html_nodes.append(html_node)
+    for node in text_nodes:
+        html_nodes.append(text_node_to_html_node(node))
+    
     return html_nodes

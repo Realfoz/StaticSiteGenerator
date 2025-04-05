@@ -11,33 +11,31 @@ def main():
 
     # Call file-copying function
     copy_files_from_static(src, dest)
-    generate_page("content/index.md","template.html", "public/index.html")
+    process_content_directory("content", "template.html", "public")
 
     print("Static files copied successfully!")
 
 
 
 def copy_files_from_static(src, dest):
-    # Clean and recreate destination directory
-    if os.path.exists(dest):
-        shutil.rmtree(dest)  # Delete destination directory to start fresh
-    os.mkdir(dest)  # Recreate the root directory 
+    # Clean and recreate destination directory if it doesn't exist
+    if not os.path.exists(dest):
+        os.makedirs(dest)
 
     # Loop through all items in the source directory
     for item in os.listdir(src):
-        
         src_path = os.path.join(src, item) 
         dest_path = os.path.join(dest, item)
         
-
         if os.path.isdir(src_path):  # If the item is a directory
-            
-            os.mkdir(dest_path)  
+            if not os.path.exists(dest_path):
+                os.makedirs(dest_path)  
             # Recursively copy the contents of the directory
             copy_files_from_static(src_path, dest_path)
         else:  # If the item is a file
-            
             shutil.copy(src_path, dest_path)  # Copy the file to the destination
+
+
 
 def extract_title(markdown):
         for line in markdown.splitlines():
@@ -49,8 +47,8 @@ def extract_title(markdown):
         raise Exception("No H1 header found in the markdown")
 
 def generate_page(from_path, template_path, dest_path):
-    print (f"Generating page from {from_path} to {dest_path} using {template_path}")
-     # Read markdown file
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    # Read markdown file
     with open(from_path, 'r') as md_file:
         markdown_content = md_file.read()
     
@@ -70,11 +68,30 @@ def generate_page(from_path, template_path, dest_path):
     
     with open(dest_path, 'w') as dest_file:
         dest_file.write(final_html)
-    
 
-
-
-
+def process_content_directory(content_dir, template_path, public_dir):
+    print(f"Processing content directory: {content_dir}")
+    for root, dirs, files in os.walk(content_dir):
+        print(f"Checking directory: {root}")
+        print(f"Files found: {files}")
+        for file in files:
+            # Only process markdown files
+            if file.endswith('.md'):
+                print(f"Processing markdown file: {file}")
+                # Get the full path to the markdown file
+                md_path = os.path.join(root, file)
+                
+                # Calculate the relative path from content_dir
+                rel_path = os.path.relpath(md_path, content_dir)
+                print(f"Relative path: {rel_path}")
+                
+                # Determine the destination path in public_dir
+                dest_rel_path = os.path.splitext(rel_path)[0] + '.html'
+                dest_path = os.path.join(public_dir, dest_rel_path)
+                print(f"Destination path: {dest_path}")
+                
+                # Generate the HTML page
+                generate_page(md_path, template_path, dest_path)
 
 if __name__ =="__main__":
     main()

@@ -36,12 +36,12 @@ class LeafNode(HTMLNode):
         
 
     def to_html(self):    
-        if not self.value:
-            raise ValueError("must have a value") 
-
+        if self.value is None:
+            self.value = ""  # Set empty string instead of raising an error
+        
         if self.tag is None:
             return self.value
-    
+        
         # Start building the opening tag
         html = f"<{self.tag}" 
 

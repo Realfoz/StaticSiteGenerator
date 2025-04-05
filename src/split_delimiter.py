@@ -4,41 +4,52 @@ import re
 
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
-    new_nodes = []  # Initialize an empty list to store the resulting nodes
+    new_nodes = []  # To store the resulting nodes
 
     if not isinstance(old_nodes, list):
         raise TypeError("old_nodes must be a list of TextNode objects")
     
-    for node in old_nodes:  # Iterate over each node in the list
-        if node.text_type == TextType.TEXT:  # Only split text-type nodes
-            parts = node.text.split(delimiter)
-            
-            if len(parts) == 1:  # No delimiter found at all
-                new_nodes.append(node)  # Keep the node unchanged
+    for node in old_nodes:
+        # Directly handle non-text nodes first
+        if node.text_type != TextType.TEXT:
+            new_nodes.append(node)
+            continue  # Skip to the next node since non-text nodes need no splitting
 
-            elif len(parts) == 2:  # Only one delimiter found (opening without closing)
-                raise ValueError(f"Mismatched or missing delimiters for '{delimiter}' in: {node.text}")
+        # Split text-type nodes using the delimiter
+        parts = node.text.split(delimiter)
+
+        # If no delimiters were found, keep the original text node
+        if len(parts) == 1:  # Only one part means no splitting occurred
+            new_nodes.append(node)
+            continue  # Skip further processing
+        
+        # Handle split text with multiple parts
+        while len(parts) > 1:
+            # `before` part (valid even if empty)
+            before_text = parts.pop(0)
+            before_node = TextNode(before_text, TextType.TEXT)
+            new_nodes.append(before_node)
             
-            else:              
-                # Create new nodes for before, middle, and after parts
-                before_node = TextNode(parts[0], TextType.TEXT)  # Before part
-                middle_node = TextNode(parts[1], text_type)  # Middle part, converted to provided text_type
-                after_node = TextNode(parts[2], TextType.TEXT)  # After part
-                
-                # Add them to the result list
-                new_nodes.extend([before_node, middle_node, after_node])
-        else:
-            new_nodes.append(node) # Add the non-text node directly to the list
-    return new_nodes  # Ensure the fully constructed list is returned
+                        # `middle` part (text matching the delimiter)
+            middle_text = parts.pop(0)
+            middle_node = TextNode(middle_text, text_type)
+            new_nodes.append(middle_node)
+        
+        # Handle the `after` part (whatever remains in `parts`)
+        # If there's still something left, it goes to a final TEXT node
+        if parts:
+            after_text = parts[0]
+            after_node = TextNode(after_text, TextType.TEXT)
+            new_nodes.append(after_node)
+
+    return new_nodes  # Return all the newly constructed nodes
 
 
 def extract_markdown_images(text):
     return re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
 
-
 def extract_markdown_links(text):
     return re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
-
 
 def split_nodes_image(old_nodes):
     result = []
@@ -71,9 +82,6 @@ def split_nodes_image(old_nodes):
             result.append(node)
     return result  # Return result after processing all nodes
 
-
-
-
 def split_nodes_link(old_nodes):
     result = []
     for node in old_nodes:  # Iterate over each node in the list
@@ -105,8 +113,6 @@ def split_nodes_link(old_nodes):
             result.append(node)
     return result  # Return result after processing all nodes
 
-
-
 def markdown_to_blocks(markdown):
     final_list = []
     # Strip leading/trailing whitespace or newlines from the entire input
@@ -117,9 +123,6 @@ def markdown_to_blocks(markdown):
             stripped_block = "\n".join(subline.strip() for subline in line.split("\n"))
             final_list.append(stripped_block)
     return final_list
-
-
-
 
 def block_to_block_type(block):
     # Check for heading
@@ -150,8 +153,7 @@ def block_to_block_type(block):
         return BlockType.ordered_list
     
     return BlockType.paragraph
-        
-
+       
 def is_ordered_list(block):
     lines = block.split("\n")
     for i, line in enumerate(lines):
@@ -159,7 +161,6 @@ def is_ordered_list(block):
         if not line.startswith(expected_start):
             return False
     return True        
-
 
 def markdown_to_html_node(markdown):
     blocks = markdown_to_blocks(markdown)  # Split the markdown into blocks
@@ -211,7 +212,6 @@ def markdown_to_html_node(markdown):
             html_node = ParentNode("ul", list_items)
             parent_node.children.append(html_node)
     return parent_node
-
 
 def text_to_textnodes(text):
     

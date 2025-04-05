@@ -3,15 +3,21 @@ import shutil
 from split_delimiter import markdown_to_html_node
 
 def main():
+    import sys
+    
+    # Get the base path from command line or use default
+    basepath = "/"
+    if len(sys.argv) > 1:
+        basepath = sys.argv[1]
     
     src = "static"  # Directory containing source files
-    dest = "public"  # Directory to copy files into
+    dest = "docs"  # Directory to copy files into
 
     print(f"Copying files from '{src}' to '{dest}'...")
 
     # Call file-copying function
     copy_files_from_static(src, dest)
-    process_content_directory("content", "template.html", "public")
+    process_content_directory("content", "template.html", dest, basepath)
 
     print("Static files copied successfully!")
 
@@ -46,7 +52,7 @@ def extract_title(markdown):
         # This will execute if no H1 header is found
         raise Exception("No H1 header found in the markdown")
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     # Read markdown file
     with open(from_path, 'r') as md_file:
@@ -61,6 +67,10 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(markdown_content)
     final_html = template_content.replace("{{ Title }}", title)
     final_html = final_html.replace("{{ Content }}", html_content)
+
+        # Replace root-relative URLs with base path
+    final_html = final_html.replace('href="/', f'href="{basepath}')
+    final_html = final_html.replace('src="/', f'src="{basepath}')
     
     dest_dir = os.path.dirname(dest_path)
     if dest_dir and not os.path.exists(dest_dir):
@@ -69,7 +79,7 @@ def generate_page(from_path, template_path, dest_path):
     with open(dest_path, 'w') as dest_file:
         dest_file.write(final_html)
 
-def process_content_directory(content_dir, template_path, public_dir):
+def process_content_directory(content_dir, template_path, output_dir, basepath="/"):
     print(f"Processing content directory: {content_dir}")
     for root, dirs, files in os.walk(content_dir):
         print(f"Checking directory: {root}")
@@ -87,11 +97,11 @@ def process_content_directory(content_dir, template_path, public_dir):
                 
                 # Determine the destination path in public_dir
                 dest_rel_path = os.path.splitext(rel_path)[0] + '.html'
-                dest_path = os.path.join(public_dir, dest_rel_path)
+                dest_path = os.path.join(output_dir, dest_rel_path)
                 print(f"Destination path: {dest_path}")
                 
                 # Generate the HTML page
-                generate_page(md_path, template_path, dest_path)
+                generate_page(md_path, template_path, dest_path, basepath)
 
 if __name__ =="__main__":
     main()
